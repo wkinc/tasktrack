@@ -29,22 +29,34 @@ pipeline {
         }
       }
     }
-    stage('Install and Lint') {
-      agent { docker { image 'node:22'; reuseNode true } }
-      steps {
-        sh 'npm ci'
-        sh 'npm run lint'
-      }
+stage('Install and Lint') {
+  agent {
+    docker {
+      image 'node:22'
+      reuseNode true
+      args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
     }
-    stage('Unit Tests') {
-      agent { docker { image 'node:22'; reuseNode true } }
-      steps {
-        sh 'npm test -- --ci --coverage'
-      }
-      post {
-        always { junit allowEmptyResults: true, testResults: 'junit.xml' }
-      }
+  }
+  steps {
+    sh 'npm ci'
+    sh 'npm run lint'
+  }
+}
+stage('Unit Tests') {
+  agent {
+    docker {
+      image 'node:22'
+      reuseNode true
+      args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
     }
+  }
+  steps {
+    sh 'npm test -- --ci --coverage'
+  }
+  post {
+    always { junit allowEmptyResults: true, testResults: 'junit.xml' }
+  }
+}
     stage('Docker Build and Push Tag') {
       steps {
         sh 'docker build -t $IMAGE:$TAG .'
