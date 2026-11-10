@@ -90,7 +90,6 @@ function createApp(options = {}) {
     res.status(204).end();
   });
 
-  // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
     if (err.type === 'entity.parse.failed') {
       return res.status(400).json({ error: 'invalid JSON' });

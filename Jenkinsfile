@@ -44,7 +44,6 @@ pipeline {
     stage('Docker Build and Push Tag') {
       steps {
         sh 'docker build -t $IMAGE:$TAG .'
-        // Credential ID 'dockerhub-creds' is added in Jenkins by [Filled by Pua]
         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
                          usernameVariable: 'U', passwordVariable: 'P')]) {
           sh 'echo "$P" | docker login -u "$U" --password-stdin'
@@ -53,7 +52,6 @@ pipeline {
       }
     }
     stage('Deploy to Test') {
-      // Agent label 'test' is set up by [Filled by Pua]
       agent { label 'test' }
       steps {
         sh '''
@@ -68,19 +66,13 @@ pipeline {
       agent { label 'test' }
       steps {
         sh 'npm ci'
-        sh 'BASE_URL=http://localhost:3000 npm run test:integration'   // tests by [Filled by Wong]
+        sh 'BASE_URL=http://localhost:3000 npm run test:integration'
         sh 'curl -fsS http://localhost:3000/ > /dev/null'
-      }
-    }
-    stage('Push latest') {
-      steps {
-        sh 'docker tag $IMAGE:$TAG $IMAGE:latest && docker push $IMAGE:latest'
       }
     }
     stage('Deploy to Production') {
       steps {
         script { env.PROD_TOUCHED = 'true' }
-        // Credential ID 'prod-ssh-key' is added in Jenkins by [Filled by Pua]
         sshagent(['prod-ssh-key']) {
           sh """
             scp -o StrictHostKeyChecking=accept-new docker-compose.yml scripts/*.sh $PROD_HOST:/opt/tasktrack/
@@ -93,12 +85,26 @@ pipeline {
       steps {
         sh 'bash scripts/healthcheck.sh $PROD_URL/health $TAG'
         sshagent(['prod-ssh-key']) {
-          sh 'ssh $PROD_HOST "echo $TAG > /opt/tasktrack/last_good_tag"'
+          // "cat >" runs on the production server, so the file is saved there
+          sh 'echo "$TAG" | ssh $PROD_HOST "cat > /opt/tasktrack/last_good_tag"'
+        }
+      }
+    }
+    stage('Push latest') {
+      // Moved here: only a healthy production build becomes "latest"
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                         usernameVariable: 'U', passwordVariable: 'P')]) {
+          sh 'echo "$P" | docker login -u "$U" --password-stdin'
+          sh 'docker tag $IMAGE:$TAG $IMAGE:latest && docker push $IMAGE:latest'
         }
       }
     }
   }
   post {
+    always {
+      sh 'docker logout || true'
+    }
     failure {
       script {
         if (env.PROD_TOUCHED == 'true') {
@@ -110,7 +116,7 @@ pipeline {
       echo 'Build failed. Check the stage view.'
     }
     success {
-      echo "Deployed $TAG to production"
+      echo "Deployed ${env.TAG} to production"
     }
   }
 }
