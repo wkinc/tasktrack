@@ -152,3 +152,7 @@ describe('storage and validation helpers', () => {
     expect(buildTask({ title: 'x' }, DEFAULTS).value.status).toBe('To Do');
   });
 });
+
+test('DEMO: deliberately failing test', () => {
+  expect(1).toBe(2);
+});
