@@ -26,16 +26,16 @@ pipeline {
       }
     }
     stage('Install and Lint') {
-      agent { docker { image 'node:22-alpine'; reuseNode true } }
+      agent { docker { image 'node:22'; reuseNode true } }
       steps {
         sh 'npm ci'
-        sh 'npm run lint'          // script by [Filled by Chan]
+        sh 'npm run lint'
       }
     }
     stage('Unit Tests') {
-      agent { docker { image 'node:22-alpine'; reuseNode true } }
+      agent { docker { image 'node:22'; reuseNode true } }
       steps {
-        sh 'npm test -- --ci --coverage'   // tests and 80% threshold by [Filled by Chan]
+        sh 'npm test -- --ci --coverage'
       }
       post {
         always { junit allowEmptyResults: true, testResults: 'junit.xml' }
