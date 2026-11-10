@@ -1,0 +1,14 @@
+services:
+  tasktrack:
+    image: ${DOCKERHUB_USER}/tasktrack:${IMAGE_TAG}
+    container_name: tasktrack
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:3000:3000"
+    environment:
+      APP_VERSION: ${IMAGE_TAG}
+      FORCE_UNHEALTHY: ${FORCE_UNHEALTHY:-false}
+    volumes:
+      - tasktrack-data:/data
+volumes:
+  tasktrack-data:

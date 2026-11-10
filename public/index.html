@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskTrack</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>TaskTrack</h1>
+    <nav id="filters" aria-label="Filter tasks by status">
+      <button data-status="" class="active">All</button>
+      <button data-status="To Do">To Do</button>
+      <button data-status="In Progress">In Progress</button>
+      <button data-status="Done">Done</button>
+    </nav>
+  </header>
+
+  <main>
+    <form id="task-form" class="panel">
+      <h2 id="form-title">Add a task</h2>
+      <label>Title
+        <input id="title" required maxlength="200">
+      </label>
+      <label>Description
+        <textarea id="description" rows="2"></textarea>
+      </label>
+      <div class="row">
+        <label>Due date
+          <input id="due_date" type="date">
+        </label>
+        <label>Priority
+          <select id="priority">
+            <option>Low</option>
+            <option selected>Medium</option>
+            <option>High</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="status">
+            <option>To Do</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </label>
+      </div>
+      <p id="form-error" class="error" role="alert" hidden></p>
+      <div class="actions">
+        <button type="submit" id="save">Add task</button>
+        <button type="button" id="cancel" class="secondary" hidden>Cancel edit</button>
+      </div>
+    </form>
+
+    <section aria-live="polite">
+      <p id="empty" class="empty" hidden>No tasks here yet. Add one above.</p>
+      <ul id="task-list"></ul>
+    </section>
+  </main>
+
+  <footer>TaskTrack <span id="version">version loading...</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules
+coverage
+.env
+*.db
+*.pem
+id_ed25519*
+tasktrack_admin*
+junit.xml
