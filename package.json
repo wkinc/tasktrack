@@ -1,10 +1,10 @@
 {
   "name": "tasktrack",
   "version": "1.0.0",
-  "description": "",
+  "description": "Task tracking app",
   "main": "src/server.js",
-  "directories": {
-    "test": "tests"
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "start": "node src/server.js",

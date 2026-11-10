@@ -26,14 +26,14 @@ pipeline {
       }
     }
     stage('Install and Lint') {
-      agent { docker { image 'node:20-alpine'; reuseNode true } }
+      agent { docker { image 'node:22-alpine'; reuseNode true } }
       steps {
         sh 'npm ci'
         sh 'npm run lint'          // script by [Filled by Chan]
       }
     }
     stage('Unit Tests') {
-      agent { docker { image 'node:20-alpine'; reuseNode true } }
+      agent { docker { image 'node:22-alpine'; reuseNode true } }
       steps {
         sh 'npm test -- --ci --coverage'   // tests and 80% threshold by [Filled by Chan]
       }
