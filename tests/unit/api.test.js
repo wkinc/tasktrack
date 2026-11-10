@@ -153,6 +153,7 @@ describe('storage and validation helpers', () => {
   });
 });
 
-test('DEMO: deliberately failing test', () => {
-  expect(1).toBe(2);
-});
+// Fail tset
+// test('DEMO: deliberately failing test', () => {
+//   expect(1).toBe(2);
+// });
