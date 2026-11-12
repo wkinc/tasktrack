@@ -7,7 +7,7 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
-    timeout(time: 60, unit: 'MINUTES') 
+    timeout(time: 60, unit: 'MINUTES')   // includes time spent waiting for approval
   }
 
   parameters {
@@ -95,7 +95,7 @@ pipeline {
       }
     }
 
-    // ---- NEW: manual approval gate ----
+    // Manual approval gate: any logged-in Jenkins user can press Deploy
     stage('Approve Production Deploy') {
       options { timeout(time: 30, unit: 'MINUTES') }   // auto-abort if nobody answers
       steps {
@@ -103,7 +103,6 @@ pipeline {
           def approver = input(
             message: "Deploy ${env.TAG} to production?",
             ok: 'Deploy',
-            submitter: 'group5-admin',                   // Jenkins users/groups allowed to approve
             submitterParameter: 'APPROVER'
           )
           echo "Approved by ${approver}"
@@ -160,7 +159,7 @@ pipeline {
       echo 'Build failed. Check the stage view.'
     }
     aborted {
-      echo 'Build aborted or production deploy was not approved. Production was not changed.'
+      echo 'Build aborted or production deploy was not approved.'
     }
     success {
       echo "Deployed ${env.TAG} to production"
