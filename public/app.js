@@ -2,6 +2,7 @@
   var form = document.getElementById('task-form');
   var list = document.getElementById('task-list');
   var emptyMsg = document.getElementById('empty');
+  var taskCounts = document.getElementById('task-counts');
   var errorMsg = document.getElementById('form-error');
   var saveBtn = document.getElementById('save');
   var cancelBtn = document.getElementById('cancel');
@@ -93,11 +94,19 @@
   }
 
   function load() {
-    var url = '/api/tasks' + (currentFilter ? '?status=' + encodeURIComponent(currentFilter) : '');
-    return api('GET', url).then(function (tasks) {
+    return api('GET', '/api/tasks').then(function (tasks) {
+      var counts = { 'To Do': 0, 'In Progress': 0, Done: 0 };
+      tasks.forEach(function (task) { counts[task.status] += 1; });
+      taskCounts.textContent = 'To Do: ' + counts['To Do'] +
+        ' · In Progress: ' + counts['In Progress'] +
+        ' · Done: ' + counts.Done;
+
+      var visibleTasks = currentFilter
+        ? tasks.filter(function (task) { return task.status === currentFilter; })
+        : tasks;
       list.textContent = '';
-      tasks.forEach(function (task) { list.appendChild(renderTask(task)); });
-      emptyMsg.hidden = tasks.length > 0;
+      visibleTasks.forEach(function (task) { list.appendChild(renderTask(task)); });
+      emptyMsg.hidden = visibleTasks.length > 0;
     }).catch(function (e) { showError(e.message); });
   }
 
