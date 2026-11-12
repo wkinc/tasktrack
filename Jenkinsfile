@@ -1,24 +1,27 @@
 pipeline {
   agent any
-  triggers{
+  triggers {
     githubPush()
   }
 
   options {
     timestamps()
     disableConcurrentBuilds()
-    timeout(time: 20, unit: 'MINUTES')
+    timeout(time: 60, unit: 'MINUTES')   // includes time spent waiting for approval
   }
+
   parameters {
     booleanParam(name: 'SIMULATE_FAILURE', defaultValue: false,
                  description: 'Deploy a broken build to test rollback')
   }
+
   environment {
     DOCKERHUB_USER = 'wkin'
     IMAGE          = "${DOCKERHUB_USER}/tasktrack"
-    PROD_HOST = 'taskadmin@85.211.195.131'
-    PROD_URL  = 'http://85.211.195.131'
+    PROD_HOST      = 'taskadmin@85.211.195.131'
+    PROD_URL       = 'http://85.211.195.131'
   }
+
   stages {
     stage('Checkout') {
       steps {
@@ -29,34 +32,37 @@ pipeline {
         }
       }
     }
-stage('Install and Lint') {
-  agent {
-    docker {
-      image 'node:22'
-      reuseNode true
-      args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
+
+    stage('Install and Lint') {
+      agent {
+        docker {
+          image 'node:22'
+          reuseNode true
+          args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
+        }
+      }
+      steps {
+        sh 'npm ci'
+        sh 'npm run lint'
+      }
     }
-  }
-  steps {
-    sh 'npm ci'
-    sh 'npm run lint'
-  }
-}
-stage('Unit Tests') {
-  agent {
-    docker {
-      image 'node:22'
-      reuseNode true
-      args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
+
+    stage('Unit Tests') {
+      agent {
+        docker {
+          image 'node:22'
+          reuseNode true
+          args '-e HOME=/tmp -e npm_config_cache=/tmp/.npm'
+        }
+      }
+      steps {
+        sh 'npm test -- --ci --coverage'
+      }
+      post {
+        always { junit allowEmptyResults: true, testResults: 'junit.xml' }
+      }
     }
-  }
-  steps {
-    sh 'npm test -- --ci --coverage'
-  }
-  post {
-    always { junit allowEmptyResults: true, testResults: 'junit.xml' }
-  }
-}
+
     stage('Docker Build and Push Tag') {
       steps {
         sh 'docker build -t $IMAGE:$TAG .'
@@ -67,6 +73,7 @@ stage('Unit Tests') {
         }
       }
     }
+
     stage('Deploy to Test') {
       agent { label 'test' }
       steps {
@@ -78,6 +85,7 @@ stage('Unit Tests') {
         '''
       }
     }
+
     stage('Integration Tests') {
       agent { label 'test' }
       steps {
@@ -86,6 +94,22 @@ stage('Unit Tests') {
         sh 'curl -fsS http://localhost:3000/ > /dev/null'
       }
     }
+
+    // Manual approval gate: any logged-in Jenkins user can press Deploy
+    stage('Approve Production Deploy') {
+      options { timeout(time: 30, unit: 'MINUTES') }   // auto-abort if nobody answers
+      steps {
+        script {
+          def approver = input(
+            message: "Deploy ${env.TAG} to production?",
+            ok: 'Deploy',
+            submitterParameter: 'APPROVER'
+          )
+          echo "Approved by ${approver}"
+        }
+      }
+    }
+
     stage('Deploy to Production') {
       steps {
         script { env.PROD_TOUCHED = 'true' }
@@ -97,6 +121,7 @@ stage('Unit Tests') {
         }
       }
     }
+
     stage('Health Check') {
       steps {
         sh 'bash scripts/healthcheck.sh $PROD_URL/health $TAG'
@@ -106,8 +131,9 @@ stage('Unit Tests') {
         }
       }
     }
+
     stage('Push latest') {
-      // Moved here: only a healthy production build becomes "latest"
+      // Only a healthy production build becomes "latest"
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
                          usernameVariable: 'U', passwordVariable: 'P')]) {
@@ -117,6 +143,7 @@ stage('Unit Tests') {
       }
     }
   }
+
   post {
     always {
       sh 'docker logout || true'
@@ -130,6 +157,9 @@ stage('Unit Tests') {
         }
       }
       echo 'Build failed. Check the stage view.'
+    }
+    aborted {
+      echo 'Build aborted or production deploy was not approved.'
     }
     success {
       echo "Deployed ${env.TAG} to production"
