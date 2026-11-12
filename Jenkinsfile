@@ -103,7 +103,7 @@ pipeline {
           def approver = input(
             message: "Deploy ${env.TAG} to production?",
             ok: 'Deploy',
-            submitter: 'wkin,admin',                   // Jenkins users/groups allowed to approve
+            submitter: 'group5-admin',                   // Jenkins users/groups allowed to approve
             submitterParameter: 'APPROVER'
           )
           echo "Approved by ${approver}"
