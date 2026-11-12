@@ -18,6 +18,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5; }
 h1 { margin: 0; font-size: 1.6rem; letter-spacing: -.01em; }
 h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
 #filters { display: flex; gap: .25rem; flex-wrap: wrap; }
+.task-counts { flex-basis: 100%; margin: 0; color: var(--muted); font-size: .9rem; }
 button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: .45rem .9rem; }
 button.secondary, #filters button { background: transparent; color: var(--accent); }
 #filters button.active { background: var(--accent); color: #fff; }
